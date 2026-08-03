@@ -1190,6 +1190,12 @@ code.connect-value {
   flex-wrap: wrap;
 }
 
+.footer-bottom {
+  text-align: center;
+  margin-top: .75rem;
+  font-size: .8rem;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 780px) {
