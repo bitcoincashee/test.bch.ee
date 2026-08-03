@@ -261,7 +261,7 @@ function showPoolWarming() {
 async function loadDailyLuck(poolHps) {
   try {
     const thps = hashrateToHps(poolHps) / 1e12;
-    const url  = `https://api.solochance.org/getSoloChanceCalculations?currency=BCH&hashrate=${thps.toFixed(6)}&hashrateUnit=TH`;
+    const url  = `https://api.solochance.org/getSoloChanceCalculations?currency=tBCH&hashrate=${thps.toFixed(6)}&hashrateUnit=TH`;
     const resp = await fetch(url, { cache: 'no-cache' });
     if (!resp.ok) return;
     const d = await resp.json();
@@ -506,7 +506,7 @@ async function loadUserChance(hashrateStr) {
   const thps = hashrateToHps(hashrateStr) / 1e12;
   if (!thps) return;
   try {
-    const url  = `https://api.solochance.org/getSoloChanceCalculations?currency=BCH&hashrate=${thps.toFixed(6)}&hashrateUnit=TH`;
+    const url  = `https://api.solochance.org/getSoloChanceCalculations?currency=tBCH&hashrate=${thps.toFixed(6)}&hashrateUnit=TH`;
     const resp = await fetch(url, { cache: 'no-cache' });
     if (!resp.ok) return;
     const d = await resp.json();
