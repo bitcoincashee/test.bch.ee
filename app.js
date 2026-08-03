@@ -281,6 +281,7 @@ async function loadDailyLuck(poolHps) {
         priceEl.textContent = '$' + d.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         priceEl.classList.remove('skeleton');
       }
+      renderPayoutBreakdown();
     }
 
     if (d.networkHashrate != null) {
@@ -304,6 +305,25 @@ function formatBch(n) {
   return n.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' BCH';
 }
 
+// bchPrice is null for tBCH (no real-world price) — omit the USD suffix entirely then
+function formatUsdSuffix(bch) {
+  if (bchPrice == null || bch == null || isNaN(bch)) return '';
+  return ' ($' + (bch * bchPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ')';
+}
+
+let payoutAmounts = null; // { finderBonus, minersTotal, fee } once loaded
+
+function renderPayoutBreakdown() {
+  if (!payoutAmounts) return;
+  const { finderBonus, minersTotal, fee } = payoutAmounts;
+  const finderUsdEl = document.getElementById('payout-finder-usd');
+  const minersUsdEl = document.getElementById('payout-miners-usd');
+  const feeUsdEl    = document.getElementById('payout-fee-usd');
+  if (finderUsdEl) finderUsdEl.textContent = formatUsdSuffix(finderBonus);
+  if (minersUsdEl) minersUsdEl.textContent = formatUsdSuffix(minersTotal);
+  if (feeUsdEl)    feeUsdEl.textContent    = formatUsdSuffix(fee);
+}
+
 async function loadPayoutBreakdown() {
   const work = await getPoolWork();
   if (!work) return;
@@ -315,6 +335,9 @@ async function loadPayoutBreakdown() {
   if (minersEl) minersEl.textContent = formatBch(minersTotal);
 
   if (feeEl) feeEl.textContent = formatBch(work.fee);
+
+  payoutAmounts = { finderBonus: work.finder_bonus ?? 1, minersTotal, fee: work.fee };
+  renderPayoutBreakdown();
 }
 
 loadPayoutBreakdown();
