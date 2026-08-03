@@ -30,7 +30,7 @@
 </head>
 <body>
 <div class="site-topbar">
-  <div class="testnet-banner" role="alert">This is the Testnet4 version of bch.ee</div>
+  <div class="testnet-banner" role="alert">This is the Testnet4 version of bch.ee &middot; For mainnet, visit <a href="https://bch.ee">bch.ee</a></div>
 
   <header class="header">
     <div class="container header-inner">
@@ -156,12 +156,13 @@
           <div class="info-icon">🏆</div>
           <div class="info-title">How Each Block Pays Out</div>
           <div class="info-desc">
+            Every block splits its reward (Block Reward + Tx Fees) into these amounts, all paid at once in the same coinbase transaction — not one after another:
             <ol class="payout-order">
-              <li><span class="payout-amount">1 BCH</span> bonus to whoever finds the block, paid directly in the block's coinbase</li>
-              <li><span class="payout-amount">99%</span> of remaining reward split among all miners by shares — no minimum, even 1 sat is paid</li>
-              <li><span class="payout-amount">1%</span> pool fee on remaining reward</li>
+              <li><span class="payout-amount">1 BCH</span> flat bonus to whoever finds the block</li>
+              <li><span class="payout-amount">99%</span> of (Block Reward + Tx Fees − 1 BCH), split among all miners by shares — no minimum, even 1 sat is paid</li>
+              <li><span class="payout-amount">1%</span> of (Block Reward + Tx Fees − 1 BCH), kept as the pool fee</li>
             </ol>
-            <span class="reward-note">The block finder receives both the 1 BCH bonus and their proportional share of the remaining 99%, all in the same coinbase transaction — fully trustless, with no ongoing bookkeeping.</span>
+            <span class="reward-note">The block finder gets both: the flat 1 BCH bonus, plus their own proportional share of the 99% like every other miner. Fully trustless — every output lives in the block's own coinbase, with no ongoing bookkeeping.</span>
           </div>
         </div>
         <div class="card info-card">

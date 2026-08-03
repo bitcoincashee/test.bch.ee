@@ -62,6 +62,14 @@ main.container {
   letter-spacing: .02em;
 }
 
+.testnet-banner a {
+  color: #fff;
+  text-decoration: underline;
+}
+.testnet-banner a:hover {
+  opacity: .8;
+}
+
 /* ── Header ── */
 
 .site-topbar {
