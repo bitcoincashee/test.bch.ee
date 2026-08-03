@@ -296,6 +296,23 @@ loadPoolStats();
 // Refresh every 30 seconds
 setInterval(loadPoolStats, 30_000);
 
+// ── Payout breakdown (How Each Block Pays Out) ────────────
+
+async function loadPayoutBreakdown() {
+  const work = await getPoolWork();
+  if (!work) return;
+
+  const minersEl = document.getElementById('payout-miners-amount');
+  const feeEl    = document.getElementById('payout-fee-amount');
+
+  const minersTotal = Object.values(work.payouts ?? {}).reduce((a, b) => a + b, 0);
+  if (minersEl) minersEl.textContent = minersTotal.toFixed(6) + ' BCH';
+
+  if (feeEl && work.fee != null) feeEl.textContent = work.fee.toFixed(6) + ' BCH';
+}
+
+loadPayoutBreakdown();
+
 // ── My Stats ──────────────────────────────────────────
 
 const lookupBtn  = document.getElementById('lookup-btn');
