@@ -298,6 +298,12 @@ setInterval(loadPoolStats, 30_000);
 
 // ── Payout breakdown (How Each Block Pays Out) ────────────
 
+// BCH has 8 decimal places (satoshis) — show full precision but drop trailing zeros
+function formatBch(n) {
+  if (n == null || isNaN(n)) return '—';
+  return n.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' BCH';
+}
+
 async function loadPayoutBreakdown() {
   const work = await getPoolWork();
   if (!work) return;
@@ -306,9 +312,9 @@ async function loadPayoutBreakdown() {
   const feeEl    = document.getElementById('payout-fee-amount');
 
   const minersTotal = Object.values(work.payouts ?? {}).reduce((a, b) => a + b, 0);
-  if (minersEl) minersEl.textContent = minersTotal.toFixed(6) + ' BCH';
+  if (minersEl) minersEl.textContent = formatBch(minersTotal);
 
-  if (feeEl && work.fee != null) feeEl.textContent = work.fee.toFixed(6) + ' BCH';
+  if (feeEl) feeEl.textContent = formatBch(work.fee);
 }
 
 loadPayoutBreakdown();
