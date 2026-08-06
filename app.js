@@ -92,11 +92,19 @@ let userPayoutShare  = null;  // BCH payout if someone else finds block
 let bchPrice         = null;  // BCH price in USD
 let blocksLoaded     = false;
 let bestSharesLoaded = false;
+const BLOCKS_PAGE_SIZE = 10;
+let allBlockEntries   = null; // newest-first, populated once per page load
+let currentBlocksPage = 1;
 
 // ── Navigation ──────────────────────────────────────────
 
 const navBtns = document.querySelectorAll('.nav-btn');
 const sections = document.querySelectorAll('.section');
+const VALID_SECTIONS = ['home', 'connect', 'mystats', 'blocks', 'bestshares', 'faq'];
+
+// Set by routeFromHash() when a "blocks/<n>" deep link is opened before the
+// block list has loaded; loadBlocks() consumes it once entries are fetched.
+let pendingBlocksPage = null;
 
 function showSection(id) {
   sections.forEach(s => s.classList.toggle('active', s.id === id));
@@ -105,15 +113,34 @@ function showSection(id) {
   if (id === 'bestshares') loadBestShares();
 }
 
+// Navigating always goes through the URL hash, so the current section (and,
+// for Blocks, the current page) is always copyable and survives a reload.
+// Setting the same hash again wouldn't fire 'hashchange', so show directly.
+function navigateTo(id) {
+  const current = location.hash.replace('#', '').split('/')[0] || 'home';
+  if (current === id) showSection(id);
+  else location.hash = id;
+}
+
 navBtns.forEach(btn => {
-  btn.addEventListener('click', () => showSection(btn.dataset.section));
+  btn.addEventListener('click', () => navigateTo(btn.dataset.section));
 });
 
-// Handle hash-based navigation
+// Handle hash-based navigation — also supports "blocks/<page>" deep links
 function routeFromHash() {
-  const hash = location.hash.replace('#', '') || 'home';
-  const valid = ['home', 'connect', 'mystats', 'blocks', 'bestshares', 'faq'];
-  showSection(valid.includes(hash) ? hash : 'home');
+  const raw = location.hash.replace('#', '') || 'home';
+  const [id, pageStr] = raw.split('/');
+  const section = VALID_SECTIONS.includes(id) ? id : 'home';
+
+  if (section === 'blocks' && pageStr) {
+    const page = parseInt(pageStr, 10);
+    if (page > 0) {
+      if (allBlockEntries) { currentBlocksPage = page; renderBlocksPage(); }
+      else pendingBlocksPage = page;
+    }
+  }
+
+  showSection(section);
 }
 window.addEventListener('hashchange', routeFromHash);
 routeFromHash();
@@ -133,7 +160,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // FAQ internal nav buttons
 document.querySelectorAll('.faq-link-btn').forEach(btn => {
-  btn.addEventListener('click', () => showSection(btn.dataset.section));
+  btn.addEventListener('click', () => navigateTo(btn.dataset.section));
 });
 
 // Make Bitaxe / Avalon / NiceHash inputs selectable for easy copy
@@ -357,7 +384,7 @@ addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); 
 
 function goToMyStats(address) {
   addrInput.value = address;
-  showSection('mystats');
+  navigateTo('mystats');
   doLookup();
 }
 
@@ -556,10 +583,6 @@ async function loadUserChance(hashrateStr) {
 
 // ── Blocks ──────────────────────────────────────────────
 
-const BLOCKS_PAGE_SIZE = 10;
-let allBlockEntries  = null; // newest-first, populated once per page load
-let currentBlocksPage = 1;
-
 function buildBlockRow(b) {
   const hash      = b.hash   ?? null;
   const height    = b.height ?? null;
@@ -634,6 +657,10 @@ async function renderBlocksPage() {
   prevBtn.disabled = currentBlocksPage <= 1;
   nextBtn.disabled = currentBlocksPage >= totalPages;
   pagination.classList.toggle('hidden', totalPages <= 1);
+
+  // Keep the URL copyable/reloadable without spamming browser history —
+  // one entry per pagination click would make Back nearly unusable.
+  history.replaceState(null, '', `#blocks/${currentBlocksPage}`);
 }
 
 document.getElementById('blocks-prev-btn').addEventListener('click', () => {
@@ -672,7 +699,8 @@ async function loadBlocks() {
     }
 
     allBlockEntries = entries.slice().reverse(); // newest first
-    currentBlocksPage = 1;
+    currentBlocksPage = pendingBlocksPage ?? 1;
+    pendingBlocksPage = null;
 
     loading.classList.add('hidden');
     await renderBlocksPage();
