@@ -95,6 +95,7 @@ let bestSharesLoaded = false;
 const BLOCKS_PAGE_SIZE = 10;
 let allBlockEntries   = null; // newest-first, populated once per page load
 let currentBlocksPage = 1;
+let lastLookupAddr    = null; // guards against routeFromHash() re-triggering doLookup()
 
 // ── Navigation ──────────────────────────────────────────
 
@@ -129,14 +130,25 @@ navBtns.forEach(btn => {
 // Handle hash-based navigation — also supports "blocks/<page>" deep links
 function routeFromHash() {
   const raw = location.hash.replace('#', '') || 'home';
-  const [id, pageStr] = raw.split('/');
+  const [id, rest] = raw.split('/');
   const section = VALID_SECTIONS.includes(id) ? id : 'home';
 
-  if (section === 'blocks' && pageStr) {
-    const page = parseInt(pageStr, 10);
+  if (section === 'blocks' && rest) {
+    const page = parseInt(rest, 10);
     if (page > 0) {
       if (allBlockEntries) { currentBlocksPage = page; renderBlocksPage(); }
       else pendingBlocksPage = page;
+    }
+  }
+
+  // "#mystats/<address>" deep-links straight into a lookup. Using
+  // getElementById here (instead of the addrInput const) since this can run
+  // before that const's declaration further down the file has executed.
+  if (section === 'mystats' && rest) {
+    const addr = decodeURIComponent(rest);
+    if (addr && addr !== lastLookupAddr) {
+      document.getElementById('address-input').value = addr;
+      doLookup();
     }
   }
 
@@ -424,6 +436,12 @@ function updatePayoutUsd(price) {
 async function doLookup() {
   const addr = addrInput.value.trim();
   if (!addr) { addrInput.focus(); return; }
+
+  // Reflect the address in the URL immediately (not just on success) so the
+  // link is shareable, and record it before any await so a routeFromHash()
+  // triggered by the navigateTo() just before this call doesn't re-fire it.
+  lastLookupAddr = addr;
+  history.replaceState(null, '', `#mystats/${encodeURIComponent(addr)}`);
 
   const banner  = document.getElementById('user-status-banner');
   const grid    = document.getElementById('user-stats-grid');
