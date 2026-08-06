@@ -97,6 +97,16 @@ let allBlockEntries   = null; // newest-first, populated once per page load
 let currentBlocksPage = 1;
 let lastLookupAddr    = null; // guards against routeFromHash() re-triggering doLookup()
 
+// Declared here (rather than down in their own sections) because
+// routeFromHash() can call doLookup() synchronously at script load — on a
+// "#mystats/<address>" deep link — and doLookup() reads all four of these.
+// Declaring them later would leave them in the temporal dead zone at that
+// point and throw a ReferenceError.
+const lookupBtn  = document.getElementById('lookup-btn');
+const addrInput  = document.getElementById('address-input');
+const FINDER_CAPTION = '1 BCH bonus + your share';
+const SHARE_CAPTION  = 'your proportional share only';
+
 // ── Navigation ──────────────────────────────────────────
 
 const navBtns = document.querySelectorAll('.nav-btn');
@@ -388,9 +398,6 @@ loadPayoutBreakdown();
 
 // ── My Stats ──────────────────────────────────────────
 
-const lookupBtn  = document.getElementById('lookup-btn');
-const addrInput  = document.getElementById('address-input');
-
 lookupBtn.addEventListener('click', doLookup);
 addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
 
@@ -420,9 +427,6 @@ function relativeTime(ts) {
   }
   return 'Now';
 }
-
-const FINDER_CAPTION = '1 BCH bonus + your share';
-const SHARE_CAPTION  = 'your proportional share only';
 
 function updatePayoutUsd(price) {
   if (price == null) return;
