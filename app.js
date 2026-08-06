@@ -365,12 +365,20 @@ function relativeTime(ts) {
   if (!ts) return '—';
   const diff = Math.floor((Date.now() / 1000) - ts);
   if (diff < 0) return 'just now';
-  const d = Math.floor(diff / 86400);
-  const h = Math.floor((diff % 86400) / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  if (d > 0) return `${d} ${d === 1 ? 'day' : 'days'} ago`;
-  if (h > 0) return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;
-  if (m > 0) return `${m} ${m === 1 ? 'minute' : 'minutes'} ago`;
+  const units = [
+    ['year',   31536000],
+    ['month',  2592000],
+    ['week',   604800],
+    ['day',    86400],
+    ['hour',   3600],
+    ['minute', 60],
+  ];
+  for (const [label, secs] of units) {
+    if (diff >= secs) {
+      const n = Math.floor(diff / secs);
+      return `${n} ${label}${n === 1 ? '' : 's'} ago`;
+    }
+  }
   return 'Now';
 }
 
@@ -594,7 +602,7 @@ function buildBlockRow(b) {
   const whenEl = document.createElement('div');
   whenEl.className = 'block-meta';
   whenEl.style.marginTop = '.3rem';
-  whenEl.textContent = when ? new Date(when * 1000).toLocaleString() : '';
+  whenEl.textContent = when ? `${new Date(when * 1000).toLocaleString()} (${relativeTime(when)})` : '';
   right.appendChild(statusEl);
   right.appendChild(whenEl);
 
