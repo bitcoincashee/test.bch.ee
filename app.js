@@ -548,12 +548,100 @@ async function loadUserChance(hashrateStr) {
 
 // ── Blocks ──────────────────────────────────────────────
 
+const BLOCKS_PAGE_SIZE = 10;
+let allBlockEntries  = null; // newest-first, populated once per page load
+let currentBlocksPage = 1;
+
+function buildBlockRow(b) {
+  const hash      = b.hash   ?? null;
+  const height    = b.height ?? null;
+  const when      = b.time ?? b.createdate ?? b.timestamp;
+  const finder    = b.finder_address ?? b.solvedby ?? '';
+  const confirmed = b.confirmed;
+
+  // Link the row to its BCH Explorer page when we have an id to point at
+  const explorerId = height ?? hash;
+  const row = document.createElement(explorerId ? 'a' : 'div');
+  row.className = 'block-row';
+  if (explorerId) {
+    row.href = `${EXPLORER_BLOCK_URL}/${explorerId}`;
+    row.target = '_blank';
+    row.rel = 'noopener';
+  }
+
+  const left = document.createElement('div');
+  const heightEl = document.createElement('div');
+  heightEl.className = 'block-height';
+  heightEl.textContent = 'Block #' + (height ?? '—');
+  const hashEl = document.createElement('div');
+  hashEl.className = 'block-hash';
+  hashEl.textContent = hash ?? '—';
+  left.appendChild(heightEl);
+  left.appendChild(hashEl);
+  if (finder) {
+    const finderEl = document.createElement('div');
+    finderEl.className = 'block-meta';
+    finderEl.style.marginTop = '.3rem';
+    finderEl.textContent = '⛏ ' + finder;
+    left.appendChild(finderEl);
+  }
+
+  const right = document.createElement('div');
+  right.style.textAlign = 'right';
+  const statusEl = document.createElement('div');
+  statusEl.className = 'block-status' + (confirmed ? ' confirmed' : '');
+  statusEl.textContent = confirmed ? 'Confirmed' : 'Unconfirmed';
+  const whenEl = document.createElement('div');
+  whenEl.className = 'block-meta';
+  whenEl.style.marginTop = '.3rem';
+  whenEl.textContent = when ? new Date(when * 1000).toLocaleString() : '';
+  right.appendChild(statusEl);
+  right.appendChild(whenEl);
+
+  row.appendChild(left);
+  row.appendChild(right);
+  return row;
+}
+
+async function renderBlocksPage() {
+  const list       = document.getElementById('blocks-list');
+  const pagination = document.getElementById('blocks-pagination');
+  const pageInfo   = document.getElementById('blocks-page-info');
+  const prevBtn    = document.getElementById('blocks-prev-btn');
+  const nextBtn    = document.getElementById('blocks-next-btn');
+
+  const totalPages = Math.max(1, Math.ceil(allBlockEntries.length / BLOCKS_PAGE_SIZE));
+  currentBlocksPage = Math.min(Math.max(1, currentBlocksPage), totalPages);
+
+  const start = (currentBlocksPage - 1) * BLOCKS_PAGE_SIZE;
+  const pageEntries = allBlockEntries.slice(start, start + BLOCKS_PAGE_SIZE);
+
+  list.innerHTML = '<div class="card text-center">Loading page…</div>';
+  const details = await Promise.all(pageEntries.map(getBlockDetails));
+
+  list.innerHTML = '';
+  details.forEach(b => list.appendChild(buildBlockRow(b)));
+
+  pageInfo.textContent = `Page ${currentBlocksPage} of ${totalPages}`;
+  prevBtn.disabled = currentBlocksPage <= 1;
+  nextBtn.disabled = currentBlocksPage >= totalPages;
+  pagination.classList.toggle('hidden', totalPages <= 1);
+}
+
+document.getElementById('blocks-prev-btn').addEventListener('click', () => {
+  currentBlocksPage -= 1;
+  renderBlocksPage();
+});
+document.getElementById('blocks-next-btn').addEventListener('click', () => {
+  currentBlocksPage += 1;
+  renderBlocksPage();
+});
+
 async function loadBlocks() {
   if (blocksLoaded) return;
 
   const banner  = document.getElementById('blocks-status-banner');
   const loading = document.getElementById('blocks-loading');
-  const list    = document.getElementById('blocks-list');
   const empty   = document.getElementById('blocks-empty');
 
   // Reset UI in case this is a retry after a previous failed attempt
@@ -575,60 +663,11 @@ async function loadBlocks() {
       return;
     }
 
-    const details = await Promise.all(entries.map(getBlockDetails));
+    allBlockEntries = entries.slice().reverse(); // newest first
+    currentBlocksPage = 1;
 
     loading.classList.add('hidden');
-    list.innerHTML = '';
-    details.slice().reverse().forEach(b => {
-      const hash      = b.hash   ?? null;
-      const height    = b.height ?? null;
-      const when      = b.time ?? b.createdate ?? b.timestamp;
-      const finder    = b.finder_address ?? b.solvedby ?? '';
-      const confirmed = b.confirmed;
-
-      // Link the row to its BCH Explorer page when we have an id to point at
-      const explorerId = height ?? hash;
-      const row = document.createElement(explorerId ? 'a' : 'div');
-      row.className = 'block-row';
-      if (explorerId) {
-        row.href = `${EXPLORER_BLOCK_URL}/${explorerId}`;
-        row.target = '_blank';
-        row.rel = 'noopener';
-      }
-
-      const left = document.createElement('div');
-      const heightEl = document.createElement('div');
-      heightEl.className = 'block-height';
-      heightEl.textContent = 'Block #' + (height ?? '—');
-      const hashEl = document.createElement('div');
-      hashEl.className = 'block-hash';
-      hashEl.textContent = hash ?? '—';
-      left.appendChild(heightEl);
-      left.appendChild(hashEl);
-      if (finder) {
-        const finderEl = document.createElement('div');
-        finderEl.className = 'block-meta';
-        finderEl.style.marginTop = '.3rem';
-        finderEl.textContent = '⛏ ' + finder;
-        left.appendChild(finderEl);
-      }
-
-      const right = document.createElement('div');
-      right.style.textAlign = 'right';
-      const statusEl = document.createElement('div');
-      statusEl.className = 'block-status' + (confirmed ? ' confirmed' : '');
-      statusEl.textContent = confirmed ? 'Confirmed' : 'Unconfirmed';
-      const whenEl = document.createElement('div');
-      whenEl.className = 'block-meta';
-      whenEl.style.marginTop = '.3rem';
-      whenEl.textContent = when ? new Date(when * 1000).toLocaleString() : '';
-      right.appendChild(statusEl);
-      right.appendChild(whenEl);
-
-      row.appendChild(left);
-      row.appendChild(right);
-      list.appendChild(row);
-    });
+    await renderBlocksPage();
 
     blocksLoaded = true;
 
