@@ -122,10 +122,14 @@ let pendingBlocksPage = null;
 // runs synchronously during the initial routeFromHash() call, which happens
 // before that module's `let`/`const` declarations further down the script
 // have executed — referencing them here directly would throw (temporal dead
-// zone) and abort the rest of the script. This indirection stays a no-op
-// until the chart module is ready, then does the real re-render on later
-// (post-load) navigations back to Home.
+// zone) and abort the rest of the script. These indirections stay no-ops
+// until the chart module is ready, then do the real work on later
+// (post-load) navigations: re-render when Home is shown again, and leave
+// full screen when navigating away from Home (its toggle button lives
+// inside the Home section, so it'd otherwise be unreachable once hidden,
+// stranding the page with scrolling locked).
 let refreshPoolChartOnShow = () => {};
+let exitChartFullscreen = () => {};
 
 function showSection(id) {
   sections.forEach(s => s.classList.toggle('active', s.id === id));
@@ -133,6 +137,7 @@ function showSection(id) {
   if (id === 'blocks') loadBlocks();
   if (id === 'bestshares') loadBestShares();
   if (id === 'home') refreshPoolChartOnShow();
+  else exitChartFullscreen();
 }
 
 // Navigating always goes through the URL hash, so the current section (and,
@@ -275,7 +280,12 @@ async function loadPoolStats() {
     setStatValue('stat-uptime',   formatUptime(pool.runtime));
     setStatValue('stat-bestshare', formatDiffCompact(pool.bestshare));
     getFoundBlocks()
-      .then(blocks => setStatValue('stat-blocks', blocks.length))
+      .then(blocks => {
+        setStatValue('stat-blocks', blocks.length);
+        // Piggyback the chart's block markers on this same poll rather than
+        // running a second, independent poll of the same (uncached) listing.
+        updateChartBlocks(blocks);
+      })
       .catch(() => setStatValue('stat-blocks', pool.blocks ?? 0));
 
     const effort = parseFloat(pool.diff ?? pool.difficulty);
@@ -359,15 +369,45 @@ setInterval(loadPoolStats, 30_000);
 
 // ── Hashrate & Workers chart ──────────────────────────────
 
-const chartSvg      = document.getElementById('pool-chart-svg');
-const chartMessage  = document.getElementById('pool-chart-message');
-const chartTooltip  = document.getElementById('pool-chart-tooltip');
-const chartWrap     = document.getElementById('pool-chart-wrap');
-const chartWindowEl = document.getElementById('chart-window');
+const chartSvg         = document.getElementById('pool-chart-svg');
+const chartMessage     = document.getElementById('pool-chart-message');
+const chartTooltip     = document.getElementById('pool-chart-tooltip');
+const chartWrap        = document.getElementById('pool-chart-wrap');
+const chartWindowEl    = document.getElementById('chart-window');
+const chartCard        = document.querySelector('.chart-card');
+const chartFullscreenBtn = document.getElementById('chart-fullscreen-btn');
 
-const CHART_PAD = { top: 12, right: 46, bottom: 22, left: 50 };
+const CHART_PAD = { top: 26, right: 46, bottom: 22, left: 50 }; // extra top room for block-height labels
+const CHART_MOBILE_BREAKPOINT = '(max-width: 600px)'; // matches style.css's mobile breakpoint
+const CHART_WINDOW_MOBILE_MS  = 60 * 60_000;      // 1h on mobile
+const CHART_WINDOW_DESKTOP_MS = 3 * 60 * 60_000;  // 3h on desktop
+// Full screen shows everything the API returns — that's the full 6h scope
+// once the pool's history has matured that far.
 
-let chartPoints = []; // [{ t: ms, hashrate: hps, workers: n }], oldest first
+let chartPoints = []; // [{ t: ms, hashrate: hps, workers: n }], oldest first — full, unclamped
+let chartFullscreen = false;
+
+function getChartWindowMs() {
+  if (chartFullscreen) return Infinity;
+  return window.matchMedia(CHART_MOBILE_BREAKPOINT).matches ? CHART_WINDOW_MOBILE_MS : CHART_WINDOW_DESKTOP_MS;
+}
+
+function setChartFullscreen(on) {
+  chartFullscreen = on;
+  chartCard.classList.toggle('fullscreen', on);
+  document.body.classList.toggle('chart-fullscreen-lock', on);
+  chartFullscreenBtn.classList.toggle('active', on);
+  chartFullscreenBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+  if (chartPoints.length >= 2) renderPoolChart();
+}
+
+chartFullscreenBtn.addEventListener('click', () => setChartFullscreen(!chartFullscreen));
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && chartFullscreen) setChartFullscreen(false);
+});
+exitChartFullscreen = () => {
+  if (chartFullscreen) setChartFullscreen(false);
+};
 
 function svgEl(tag, attrs) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -405,6 +445,31 @@ function formatSpan(ms) {
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
+let chartBlocks = []; // [{ height, t: ms, confirmed }] — most recently found blocks
+
+// entries is the (ascending by height) list loadPoolStats() already fetches
+// every 30s for the live block count — reused here instead of running a
+// second, independent poll of the same (uncached) listing. Only the newest
+// entries can fall inside the chart's few-hour window, so only fetch details
+// for the tail of the list; getBlockDetails() is cached, so repeat calls
+// only fetch details for blocks found since the last poll.
+async function updateChartBlocks(entries) {
+  try {
+    const candidates = entries.slice(-60); // covers a 6h window at testnet's find rate with margin
+    const details = await Promise.all(candidates.map(getBlockDetails));
+    chartBlocks = details
+      .map(b => ({
+        height: b.height,
+        confirmed: b.confirmed,
+        t: (b.time ?? b.createdate ?? b.timestamp) * 1000,
+      }))
+      .filter(b => Number.isFinite(b.t));
+    if (chartPoints.length >= 2) renderPoolChart();
+  } catch (e) {
+    console.warn('Chart blocks unavailable:', e.message);
+  }
+}
+
 async function loadPoolChart() {
   try {
     const resp = await fetch(CHART_URL, { cache: 'no-cache' });
@@ -421,6 +486,9 @@ async function loadPoolChart() {
       .sort((a, b) => a.t - b.t);
 
     renderPoolChart();
+    // Block markers are kept in sync separately, piggybacked on
+    // loadPoolStats()'s existing 30s poll of the found-blocks listing —
+    // see updateChartBlocks().
   } catch (e) {
     console.warn('Pool chart unavailable:', e.message);
     if (!chartPoints.length) {
@@ -432,10 +500,16 @@ async function loadPoolChart() {
 }
 
 function renderPoolChart() {
-  if (chartPoints.length < 2) {
+  // Mobile/desktop show a recent slice; full screen shows everything fetched.
+  const windowMs = getChartWindowMs();
+  const fullTMax = chartPoints.length ? chartPoints[chartPoints.length - 1].t : 0;
+  const cutoff = fullTMax - windowMs;
+  const points = chartPoints.filter(p => p.t >= cutoff);
+
+  if (points.length < 2) {
     chartSvg.classList.add('hidden');
     chartMessage.classList.remove('hidden');
-    chartMessage.textContent = chartPoints.length
+    chartMessage.textContent = points.length
       ? 'Gathering data — check back in a few minutes.'
       : 'No data yet — check back in a few minutes.';
     chartWindowEl.textContent = '';
@@ -461,17 +535,19 @@ function renderPoolChart() {
   const plotW = vbW - left - right;
   const plotH = vbH - top - bottom;
 
-  const tMin = chartPoints[0].t;
-  const tMax = chartPoints[chartPoints.length - 1].t;
+  const tMin = points[0].t;
+  const tMax = points[points.length - 1].t;
   const tSpan = Math.max(tMax - tMin, 1);
   chartWindowEl.textContent = `(last ${formatSpan(tSpan)})`;
 
-  const hrMax = Math.max(...chartPoints.map(p => p.hashrate), 1) * 1.15;
-  const wMax  = Math.max(...chartPoints.map(p => p.workers), 1) * 1.3;
+  const hrMax = Math.max(...points.map(p => p.hashrate), 1) * 1.15;
+  const wMax  = Math.max(...points.map(p => p.workers), 1) * 1.3;
 
   const xPos  = t => left + ((t - tMin) / tSpan) * plotW;
   const yHr   = h => top + plotH - (h / hrMax) * plotH;
   const yW    = w => top + plotH - (w / wMax) * plotH;
+
+  const blocksInRange = chartBlocks.filter(b => b.t >= tMin && b.t <= tMax);
 
   // Grid lines + axis labels (3 horizontal bands)
   for (let i = 0; i <= 2; i++) {
@@ -497,15 +573,23 @@ function renderPoolChart() {
     })).textContent = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   });
 
+  // Found-block guide lines (subtle vertical reference, drawn behind the data)
+  blocksInRange.forEach(b => {
+    const bx = xPos(b.t);
+    chartSvg.appendChild(svgEl('line', {
+      class: 'block-line', x1: bx, x2: bx, y1: top, y2: top + plotH,
+    }));
+  });
+
   // Hashrate area + line
-  const hrPts = chartPoints.map(p => [xPos(p.t), yHr(p.hashrate)]);
+  const hrPts = points.map(p => [xPos(p.t), yHr(p.hashrate)]);
   const hrLineD = smoothPath(hrPts);
   const areaD = `${hrLineD} L ${left + plotW},${top + plotH} L ${left},${top + plotH} Z`;
   chartSvg.appendChild(svgEl('path', { class: 'hashrate-area', d: areaD }));
   chartSvg.appendChild(svgEl('path', { class: 'hashrate-line', d: hrLineD }));
 
   // Workers line
-  const wPts = chartPoints.map(p => [xPos(p.t), yW(p.workers)]);
+  const wPts = points.map(p => [xPos(p.t), yW(p.workers)]);
   chartSvg.appendChild(svgEl('path', { class: 'workers-line', d: smoothPath(wPts) }));
 
   // Interactive crosshair + tooltip
@@ -519,15 +603,39 @@ function renderPoolChart() {
   const overlay = svgEl('rect', { x: left, y: top, width: plotW, height: plotH, fill: 'transparent' });
   chartSvg.appendChild(overlay);
 
+  // Found-block markers, drawn last so they sit above the overlay and stay
+  // hoverable (native <title> tooltip) even where they cross the data.
+  // Height labels are skipped where blocks are too close together to avoid
+  // overlapping text — the tick + dot still mark every block either way.
+  let lastLabelX = -Infinity;
+  const minLabelGap = 34;
+  blocksInRange.forEach(b => {
+    const bx = xPos(b.t);
+    const dotClass = 'block-dot' + (b.confirmed ? '' : ' unconfirmed');
+    const dot = svgEl('circle', { class: dotClass, cx: bx, cy: top, r: 3 });
+    const dotTitle = svgEl('title', {});
+    const timeLabel = new Date(b.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    dotTitle.textContent = `Block #${b.height} — ${timeLabel}${b.confirmed ? '' : ' (unconfirmed)'}`;
+    dot.appendChild(dotTitle);
+    chartSvg.appendChild(dot);
+
+    if (bx - lastLabelX >= minLabelGap) {
+      chartSvg.appendChild(svgEl('text', {
+        class: 'block-label', x: bx, y: top - 8, 'text-anchor': 'middle',
+      })).textContent = '#' + b.height;
+      lastLabelX = bx;
+    }
+  });
+
   function showPoint(clientX) {
     const rect = chartSvg.getBoundingClientRect();
     const svgX = (clientX - rect.left) * (vbW / rect.width);
     const frac = Math.min(Math.max((svgX - left) / plotW, 0), 1);
     const targetT = tMin + tSpan * frac;
 
-    let nearest = chartPoints[0];
+    let nearest = points[0];
     let bestDiff = Infinity;
-    for (const p of chartPoints) {
+    for (const p of points) {
       const diff = Math.abs(p.t - targetT);
       if (diff < bestDiff) { bestDiff = diff; nearest = p; }
     }
