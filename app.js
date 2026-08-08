@@ -588,7 +588,7 @@ function renderPoolChart() {
     chartSvg.appendChild(svgEl('text', {
       class: 'axis-label', x: xPos(t), y: vbH - 6,
       'text-anchor': frac === 0 ? 'start' : frac === 1 ? 'end' : 'middle',
-    })).textContent = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    })).textContent = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   });
 
   // Found-block guide lines (subtle vertical reference, drawn behind the data)
@@ -632,7 +632,7 @@ function renderPoolChart() {
     const dotClass = 'block-dot' + (b.confirmed ? '' : ' unconfirmed');
     const dot = svgEl('circle', { class: dotClass, cx: bx, cy: top, r: 3 });
     const dotTitle = svgEl('title', {});
-    const timeLabel = new Date(b.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeLabel = new Date(b.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
     dotTitle.textContent = `Block #${b.height} — ${timeLabel}${b.confirmed ? '' : ' (unconfirmed)'}`;
     dot.appendChild(dotTitle);
     chartSvg.appendChild(dot);
@@ -676,7 +676,7 @@ function renderPoolChart() {
     chartTooltip.style.left = tooltipX + 'px';
     chartTooltip.style.top  = Math.max(tooltipY - 12, 0) + 'px';
     chartTooltip.innerHTML = `
-      <div class="tooltip-time">${new Date(nearest.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+      <div class="tooltip-time">${new Date(nearest.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}</div>
       <div class="tooltip-hashrate">⬤ ${formatHashrate(nearest.hashrate)}</div>
       <div class="tooltip-workers">⬤ ${nearest.workers} worker${nearest.workers === 1 ? '' : 's'}</div>
     `;
@@ -1043,7 +1043,7 @@ function buildBlockRow(b) {
   const whenEl = document.createElement('div');
   whenEl.className = 'block-meta';
   whenEl.style.marginTop = '.3rem';
-  whenEl.textContent = when ? `${new Date(when * 1000).toLocaleString()} (${relativeTime(when)})` : '';
+  whenEl.textContent = when ? `${new Date(when * 1000).toLocaleString([], { hourCycle: 'h23' })} (${relativeTime(when)})` : '';
   right.appendChild(statusEl);
   right.appendChild(whenEl);
 
