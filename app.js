@@ -388,8 +388,11 @@ let chartPoints = []; // [{ t: ms, hashrate: hps, workers: n }], oldest first �
 let chartFullscreen = false;
 
 function getChartWindowMs() {
-  if (chartFullscreen) return Infinity;
-  return window.matchMedia(CHART_MOBILE_BREAKPOINT).matches ? CHART_WINDOW_MOBILE_MS : CHART_WINDOW_DESKTOP_MS;
+  // Mobile has no full screen mode (the toggle button is hidden there) —
+  // it always shows the 1h window. Desktop's full screen expands to the
+  // full fetched range.
+  if (window.matchMedia(CHART_MOBILE_BREAKPOINT).matches) return CHART_WINDOW_MOBILE_MS;
+  return chartFullscreen ? Infinity : CHART_WINDOW_DESKTOP_MS;
 }
 
 function setChartFullscreen(on) {
@@ -514,6 +517,21 @@ function renderPoolChart() {
       : 'No data yet — check back in a few minutes.';
     chartWindowEl.textContent = '';
     return;
+  }
+
+  // If the chart is already showing, measure before touching anything else.
+  // Mobile browsers can report a transient near-zero box mid-orientation-
+  // change (address bar show/hide animation, full screen layout not yet
+  // settled, etc.); committing that size into the viewBox would squash the
+  // whole chart into a corner until another resize happens to fire. Bail
+  // out and leave the previous render in place — the resize handler's
+  // follow-up "settle" pass retries once layout has actually caught up.
+  // (This guard is skipped on the very first reveal, where the SVG
+  // legitimately measures 0×0 because it's still display:none.)
+  const wasVisible = !chartSvg.classList.contains('hidden');
+  if (wasVisible) {
+    const precheck = chartSvg.getBoundingClientRect();
+    if (precheck.width < 50 || precheck.height < 40) return;
   }
 
   chartMessage.classList.add('hidden');
@@ -684,14 +702,38 @@ loadPoolChart();
 setInterval(loadPoolChart, 60_000);
 
 // Re-measure on resize (debounced) so the viewBox keeps matching the
-// rendered size — e.g. on orientation change or window resize.
+// rendered size, and the mobile/desktop clamp (getChartWindowMs) keeps
+// matching the current width — e.g. on orientation change or window
+// resize. A second "settle" pass follows the first: on phones, rotating
+// can take longer than one debounce interval to finish (address bar
+// show/hide animation, etc.), so this catches whatever changed after our
+// first re-measure. renderPoolChart() itself also refuses to commit a
+// measurement that still looks mid-transition, rather than rendering a
+// squashed chart from a bad size.
 let chartResizeTimer = null;
-window.addEventListener('resize', () => {
+let chartResizeSettleTimer = null;
+// Mobile has no full screen mode (its toggle button is hidden there — see
+// style.css), so if a resize/rotation shrinks the window down to mobile
+// width while full screen is still active from a wider layout, there'd be
+// no button left to close it with. Auto-exit in that case.
+function exitFullscreenIfMobile() {
+  if (chartFullscreen && window.matchMedia(CHART_MOBILE_BREAKPOINT).matches) setChartFullscreen(false);
+}
+
+function scheduleChartResize() {
   clearTimeout(chartResizeTimer);
+  clearTimeout(chartResizeSettleTimer);
   chartResizeTimer = setTimeout(() => {
-    if (chartPoints.length >= 2 && !chartSvg.classList.contains('hidden')) renderPoolChart();
+    exitFullscreenIfMobile();
+    if (chartPoints.length >= 2) renderPoolChart();
+    chartResizeSettleTimer = setTimeout(() => {
+      exitFullscreenIfMobile();
+      if (chartPoints.length >= 2) renderPoolChart();
+    }, 350);
   }, 150);
-});
+}
+window.addEventListener('resize', scheduleChartResize);
+window.addEventListener('orientationchange', scheduleChartResize);
 
 // The chart card is display:none while another tab is active, so a periodic
 // refresh landing during that window would measure a 0×0 box. Re-measure

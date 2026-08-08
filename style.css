@@ -1429,6 +1429,7 @@ body.chart-fullscreen-lock {
   .connect-label { min-width: unset; }
 
   .chart-wrap { height: 170px; }
+  .chart-fullscreen-btn { display: none; }
 
   .footer-inner { flex-direction: column; align-items: center; }
 }
