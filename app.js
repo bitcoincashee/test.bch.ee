@@ -508,7 +508,7 @@ async function loadPoolChart() {
     if (!chartPoints.length) {
       chartSvg.classList.add('hidden');
       chartMessage.classList.remove('hidden');
-      chartMessage.textContent = 'Chart unavailable right now.';
+      chartMessage.textContent = 'Chart unavailable right now — the pool and mining are unaffected.';
     }
   }
 }
@@ -524,8 +524,8 @@ function renderPoolChart() {
     chartSvg.classList.add('hidden');
     chartMessage.classList.remove('hidden');
     chartMessage.textContent = points.length
-      ? 'Gathering data — check back in a few minutes.'
-      : 'No data yet — check back in a few minutes.';
+      ? 'Gathering chart data — check back in a few minutes. The pool and mining are unaffected.'
+      : 'No chart data yet — check back in a few minutes. The pool and mining are unaffected.';
     chartWindowEl.textContent = '';
     return;
   }
