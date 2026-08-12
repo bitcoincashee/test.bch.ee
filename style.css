@@ -1075,6 +1075,18 @@ body.chart-fullscreen-lock {
 
 .tg-footer-link:hover { opacity: .75; }
 
+.email-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .85rem;
+  transition: color .2s;
+}
+
+.email-footer-link:hover { color: var(--accent); }
+
 /* ── Disclaimer ── */
 
 .disclaimer {
