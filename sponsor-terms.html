@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Terms of Service — bch.ee Parasite Pool</title>
-  <meta name="description" content="Terms of Service for bch.ee Parasite Pool, a Bitcoin Cash mining pool." />
-  <meta property="og:title" content="Terms of Service — bch.ee Parasite Pool" />
-  <meta property="og:description" content="Terms of Service for bch.ee Parasite Pool, a Bitcoin Cash mining pool." />
+  <title>Sponsor & Supporter Terms — bch.ee Parasite Pool</title>
+  <meta name="description" content="Terms for sponsor and supporter slots on bch.ee Parasite Pool — visibility timing, text/URL changes, and removal policy." />
+  <meta property="og:title" content="Sponsor & Supporter Terms — bch.ee Parasite Pool" />
+  <meta property="og:description" content="Terms for sponsor and supporter slots on bch.ee Parasite Pool — visibility timing, text/URL changes, and removal policy." />
   <meta property="og:image" content="https://test.bch.ee/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:url" content="https://test.bch.ee/terms.html" />
+  <meta property="og:url" content="https://test.bch.ee/sponsor-terms.html" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="bch.ee Parasite Pool" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Terms of Service — bch.ee Parasite Pool" />
-  <meta name="twitter:description" content="Terms of Service for bch.ee Parasite Pool, a Bitcoin Cash mining pool." />
+  <meta name="twitter:title" content="Sponsor & Supporter Terms — bch.ee Parasite Pool" />
+  <meta name="twitter:description" content="Terms for sponsor and supporter slots on bch.ee Parasite Pool — visibility timing, text/URL changes, and removal policy." />
   <meta name="twitter:image" content="https://test.bch.ee/og-image.png" />
-  <link rel="canonical" href="https://test.bch.ee/terms.html" />
+  <link rel="canonical" href="https://test.bch.ee/sponsor-terms.html" />
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="apple-touch-icon" href="parasite-logo.png" />
@@ -80,6 +80,7 @@
         <a href="/" class="nav-btn">Home</a>
         <a href="/#connect" class="nav-btn">Connect</a>
         <a href="/#mystats" class="nav-btn">My Stats</a>
+        <a href="/#bestshares" class="nav-btn">Best Shares</a>
         <a href="/#blocks" class="nav-btn">Blocks</a>
         <a href="/faq.html" class="nav-btn">FAQ</a>
         <a href="/sponsor.html" class="nav-btn">Sponsor</a>
@@ -90,69 +91,30 @@
 
   <main class="container" style="max-width:720px">
 
-    <a href="/" class="back-link">← Back to bch.ee Parasite Pool</a>
+    <a href="/sponsor.html" class="back-link">← Back to Sponsor</a>
 
     <div class="hero" style="margin-bottom:1.5rem">
-      <h1>Terms of <span class="accent">Service</span></h1>
+      <h1>Sponsor &amp; Supporter <span class="accent">Terms</span></h1>
     </div>
 
-    <p class="legal-meta">Last updated: March 2026</p>
+    <p class="legal-meta">Last updated: August 2026</p>
 
     <div class="card legal-body">
 
-      <h2>1. Acceptance of Terms</h2>
-      <p>By connecting your mining hardware to bch.ee Parasite Pool (<code>testnet4.bch.ee:3333</code>) or accessing this website, you agree to be bound by these Terms of Service. If you do not agree, do not use the service.</p>
+      <h2>1. Visibility</h2>
+      <p>Your text and URL go live 24 hours after your BCH payment is confirmed to the address delivered to you via email. For the Sponsor tier, this also includes your logo and, if requested, an image shown on the Sponsor page only. Your sponsorship or support is shown on both the mainnet (bch.ee) and testnet (test.bch.ee) instances of the pool.</p>
 
-      <h2>2. Service Description</h2>
-      <p>bch.ee Parasite Pool is a Bitcoin Cash (BCH) mining pool that allows participants to combine their mining hashrate and share block rewards proportionally. The pool is operated by the individual behind <a href="https://solochance.org" target="_blank" rel="noopener">SoloChance.org</a> and is currently in beta.</p>
+      <h2>2. Changes</h2>
+      <p>Your text and URL — and, for the Sponsor tier, your logo and image — can each be changed up to 2 times during the paid period. Requested changes take effect within 1 week.</p>
 
-      <h2>3. Beta Status</h2>
-      <p>The pool is in beta. This means the service may be unstable, interrupted, or terminated at any time without prior notice. No guarantees are made regarding uptime, availability, or continuity of service during the beta period.</p>
+      <h2>3. Right to Reject</h2>
+      <p>bch.ee Parasite Pool reserves the right to reject any submitted text, URL, logo, or image, without explanation.</p>
 
-      <h2>4. Eligibility</h2>
-      <p>You may use the service only if doing so complies with all laws and regulations applicable in your jurisdiction. It is your sole responsibility to determine whether Bitcoin Cash mining is legal where you are located. By using the service, you represent that your use is lawful.</p>
+      <h2>4. Right to Remove</h2>
+      <p>bch.ee Parasite Pool reserves the right to remove a sponsor or supporter listing without refund if the text, URL, logo, or image is changed to illegal content or used in bad faith.</p>
 
-      <h2>5. Payouts</h2>
-      <p>Payouts are not sent as a separate transaction — they are placed directly as outputs in that same block's coinbase transaction the moment it's found, with no separate pool-side ledger or later payout transaction to trust. The payout structure is as follows:</p>
-      <ul>
-        <li>The miner who finds the block receives a <strong>1 BCH finder bonus</strong>, paid in the coinbase and spendable after 100 confirmations (~16.5 hours).</li>
-        <li>99% of the remaining block reward (Block Reward + Transaction Fees − 1 BCH) is distributed proportionally (PROP) among all miners based on shares submitted since the last block, with no minimum payout — even 1 sat is paid.</li>
-        <li>1% is retained as the pool fee.</li>
-      </ul>
-      <p>Payouts are placed automatically as coinbase outputs to the BCH address used as your mining username — no manual withdrawal, no separate transaction, and no ongoing bookkeeping. The pool does not hold funds beyond what is necessary to process the current block payout.</p>
-
-      <h2>6. Fees</h2>
-      <p>The effective fee is approximately <strong>~0.7%</strong> of the full block reward. The 1 BCH finder bonus is paid fee-free; the 1% fee applies only to the remaining distributable reward.</p>
-
-      <h2>7. No Guarantee of Earnings</h2>
-      <p>Mining rewards depend on network difficulty, pool hashrate, block variance, and other factors outside our control. bch.ee Parasite Pool makes no guarantee of any earnings, minimum payouts, or block discovery frequency.</p>
-
-      <h2>8. Acceptable Use</h2>
-      <p>You agree not to:</p>
-      <ul>
-        <li>Submit invalid, duplicate, or artificially inflated shares.</li>
-        <li>Attempt to manipulate, disrupt, or attack the pool infrastructure.</li>
-        <li>Use the pool for any unlawful purpose.</li>
-        <li>Impersonate another miner's address to divert payouts.</li>
-      </ul>
-      <p>We reserve the right to ban any address or IP address that violates these rules without notice or compensation.</p>
-
-      <h2>9. Limitation of Liability</h2>
-      <p>To the maximum extent permitted by applicable law, bch.ee Parasite Pool and its operator shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the service, including but not limited to:</p>
-      <ul>
-        <li>Lost mining rewards due to service interruptions or technical failures.</li>
-        <li>Incorrect payout amounts caused by software bugs.</li>
-        <li>Loss of funds due to an incorrect BCH address provided by the user.</li>
-        <li>Market fluctuations in the value of BCH.</li>
-      </ul>
-      <h2>10. Privacy</h2>
-      <p>Please refer to our <a href="/privacy.html">Privacy Policy</a> for information on what data is collected and how it is used.</p>
-
-      <h2>11. Changes to These Terms</h2>
-      <p>We reserve the right to update these Terms at any time. The date at the top of this page reflects the most recent revision. Continued use of the pool after changes are posted constitutes acceptance of the updated Terms.</p>
-
-      <h2>12. Contact</h2>
-      <p>For questions regarding these Terms, contact us via Telegram: <a href="https://t.me/parabchee" target="_blank" rel="noopener">t.me/parabchee</a>, or email <a href="mailto:parasite@bch.ee">parasite@bch.ee</a>.</p>
+      <h2>5. Contact</h2>
+      <p>For questions regarding these terms, email <a href="mailto:parasite@bch.ee" style="color:var(--accent)">parasite@bch.ee</a>.</p>
 
     </div>
 
