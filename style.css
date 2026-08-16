@@ -343,11 +343,18 @@ main.container {
 }
 
 .supporter-slot-filled {
-  align-items: flex-start;
+  align-items: center;
   border-style: solid;
+  padding: .6rem .6rem;
 }
 
 .supporter-slot-num { color: var(--muted); }
+
+.supporter-slot-logo {
+  flex-shrink: 0;
+  height: 4.5rem;
+  width: auto;
+}
 
 .supporter-link {
   color: var(--text);
