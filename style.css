@@ -348,12 +348,34 @@ main.container {
   padding: .6rem .6rem;
 }
 
+a.supporter-slot {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+
+a.supporter-slot:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
 .supporter-slot-num { color: var(--muted); }
 
-.supporter-slot-logo {
+.supporter-slot-logo-wrap {
   flex-shrink: 0;
-  height: 4.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: .55rem .8rem;
+}
+
+.supporter-slot-logo {
+  height: 56px;
   width: auto;
+  display: block;
 }
 
 .supporter-link {
@@ -396,6 +418,7 @@ main.container {
 .tier-table td:nth-child(2),
 .tier-table td:nth-child(3) { color: var(--muted); white-space: nowrap; }
 .tier-table td:nth-child(4) { color: var(--muted); min-width: 200px; }
+.tier-table td:nth-child(5) { color: var(--muted); white-space: nowrap; }
 
 .donation-field {
   display: flex;
