@@ -364,6 +364,7 @@ a.supporter-slot:hover {
 
 .supporter-slot-logo-wrap {
   flex-shrink: 0;
+  width: 106px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
