@@ -115,14 +115,14 @@
       <h2>5. Payouts</h2>
       <p>Payouts are not sent as a separate transaction — they are placed directly as outputs in that same block's coinbase transaction the moment it's found, with no separate pool-side ledger or later payout transaction to trust. The payout structure is as follows:</p>
       <ul>
-        <li>The miner who finds the block receives a <strong>1 BCH finder bonus</strong>, paid in the coinbase and spendable after 100 confirmations (~16.5 hours).</li>
-        <li>99% of the remaining block reward (Block Reward + Transaction Fees − 1 BCH) is distributed proportionally (PROP) among all miners based on shares submitted since the last block, with no minimum payout — even 1 sat is paid.</li>
-        <li>1% is retained as the pool fee.</li>
+        <li>A <strong>2% pool fee</strong> is taken first, from the full block reward (Block Reward + Transaction Fees).</li>
+        <li>The miner who finds the block receives a <strong>1 BCH finder bonus</strong>, paid in the coinbase and spendable after 100 confirmations (~16.5 hours), from what's left after the fee.</li>
+        <li>The remaining balance is distributed proportionally (PROP) among all miners based on shares submitted since the last block, with no minimum payout — even 1 sat is paid.</li>
       </ul>
       <p>Payouts are placed automatically as coinbase outputs to the BCH address used as your mining username — no manual withdrawal, no separate transaction, and no ongoing bookkeeping. The pool does not hold funds beyond what is necessary to process the current block payout.</p>
 
       <h2>6. Fees</h2>
-      <p>The effective fee is approximately <strong>~0.7%</strong> of the full block reward. The 1 BCH finder bonus is paid fee-free; the 1% fee applies only to the remaining distributable reward.</p>
+      <p>The pool fee is <strong>2%</strong> of the full block reward, taken first — before the 1 BCH finder bonus and miner payouts are calculated.</p>
 
       <h2>7. No Guarantee of Earnings</h2>
       <p>Mining rewards depend on network difficulty, pool hashrate, block variance, and other factors outside our control. bch.ee Parasite Pool makes no guarantee of any earnings, minimum payouts, or block discovery frequency.</p>
